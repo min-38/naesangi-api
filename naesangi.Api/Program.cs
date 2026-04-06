@@ -1,4 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using naesangi.Api.Data;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Database connection string 구성
+var host = builder.Configuration["DATABASE:HOST"]
+    ?? throw new InvalidOperationException("DATABASE:HOST is missing.");
+var port = builder.Configuration["DATABASE:PORT"]
+    ?? throw new InvalidOperationException("DATABASE:PORT is missing.");
+var db = builder.Configuration["DATABASE:NAME"]
+    ?? throw new InvalidOperationException("DATABASE:NAME is missing.");
+var user = builder.Configuration["DATABASE:USER"]
+    ?? throw new InvalidOperationException("DATABASE:USER is missing.");
+var password = builder.Configuration["DATABASE:PASSWORD"]
+    ?? throw new InvalidOperationException("DATABASE:PASSWORD is missing.");
+
+var connStr = $"Host={host};Port={port};Database={db};Username={user};Password={password}";
 
 // CORS 정책 추가
 builder.Services.AddCors(options =>
@@ -14,8 +31,11 @@ builder.Services.AddCors(options =>
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddSwaggerGen();  // Swagger 생성기 추가
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddNpgSql(connStr, name: "postgres");
 builder.Services.AddOpenApi();
+builder.Services.AddDbContext<NaesangiDbContext>(opt =>
+    opt.UseNpgsql(connStr));
 
 var app = builder.Build();
 
